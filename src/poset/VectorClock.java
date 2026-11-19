@@ -166,7 +166,7 @@ public class VectorClock {
 		int count = 0;
 		while (str.hasMoreTokens()) {
 			s = str.nextToken(",");
-			int clock = Integer.parseInt(s);
+			int clock = Integer.parseInt(s.trim());
 			vc.set(count++, clock);
 		}
 		return vc;
