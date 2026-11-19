@@ -27,6 +27,8 @@ public final class Trace {
     }
     public int processes() { return events.length; }
     public int size(int p) { return events[p].length; }
+    /** Clock of the zero-based event on process p (returned as a defensive copy). */
+    public int[] eventClock(int p, int eventIndex) { return events[p][eventIndex].clone(); }
     public boolean enabled(int[] state, int p) {
         if (state[p] >= size(p)) return false;
         int[] clock = events[p][state[p]];
@@ -62,7 +64,8 @@ public final class Trace {
         }
         return new Trace(reduced);
     }
-    
+
+    // A frontier event is maximal only if no included event succeeds it.
     public boolean maximal(int[] state, int p) {
         if (state[p] == 0) return false;
         for (int q = 0; q < processes(); q++) {
@@ -71,11 +74,11 @@ public final class Trace {
         }
         return true;
     }
-
+    // For an enabled next event e on p, e cannot precede any event in state.
     public boolean concurrentWithFrontier(int[] state, int p, int q) {
         return state[q] > 0 && events[p][state[p]][q] < state[q];
     }
-    // Assign sigma ranks
+    // Assign sigma ranks by repeatedly executing an enabled next event.
     public int[][] topologicalRanks() {
         int[][] ranks = new int[processes()][];
         for (int p = 0; p < processes(); p++) ranks[p] = new int[size(p)];
@@ -103,5 +106,17 @@ public final class Trace {
                 if (events[p][state[p]-1][j] > state[j]) return false;
         }
         return true;
+    }
+
+    /** Whether two events are concurrent according to their vector clocks. */
+    public boolean concurrentEvents(int p, int pEvent, int q, int qEvent) {
+        int[] a = events[p][pEvent];
+        int[] b = events[q][qEvent];
+        boolean aLeqB = true, bLeqA = true;
+        for (int i = 0; i < processes(); i++) {
+            if (a[i] > b[i]) aLeqB = false;
+            if (b[i] > a[i]) bLeqA = false;
+        }
+        return !aLeqB && !bLeqA;
     }
 }
