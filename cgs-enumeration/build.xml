@@ -1,0 +1,128 @@
+<project name="cgs-enumeration" default="all">
+    <property name="src" value="src" />
+    <property name="build" value="build" />
+    <property name="bin" value="bin" />
+    <property name="dist" value="dist" />
+    <property name="lib" value="lib" />
+    <property name="driver" value="poset.TraverseLattice" />
+    <property name="minMem" value="256m" />
+    <property name="maxMem" value="2048m" />
+    <property name="slf4" value="${lib}/slf4j-api-1.7.5.jar" />
+    <property name="logback-core" value="${lib}/logback-core-1.1.0.jar" />
+    <property name="logback-classic" value="${lib}/logback-classic-1.1.0.jar" />
+    <property name="dist-name" value="cgs-enumeration.jar"/>
+    <property name="classpath" value="${slf4};${logback-core};${logback-classic}" />
+
+    <target name="all" depends="clean, jar, run" description="compile jar and run" />
+
+    <target name="clean">
+        <delete dir="${bin}" />
+    </target>
+
+    <target name="compile" description="compile classes">
+        <mkdir dir="${bin}" />
+        <property name="build.compiler" value="modern" />
+        <javac source="8"
+	       target="8"
+               includeantruntime="false"
+               srcdir="${src}"
+               destdir="${bin}"
+               debug="off"
+               optimize="true"
+               verbose="false"
+               classpath="${classpath}">
+        </javac>
+    </target>
+
+    <target name="jar" depends="clean,compile" description="create a compact jar, which requires external libraries to be put in lib/">
+        <jar basedir="${bin}" destfile="${dist}/${dist-name}">
+            <zipfileset file="logback.xml" />
+            <manifest>
+                <attribute name="Main-Class" value="${driver}" />
+                <attribute name="Class-Path" value="../logback.xml ../${slf4} ../${logback-classic} ../${logback-core}" />
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="jar-complete" depends="clean,compile" description="create a jar for distribution">
+        <jar basedir="${bin}" destfile="${dist}/${dist-name}">
+            <zipfileset src="${slf4}" includes="**/*.java **/*.class" />
+            <zipfileset src="${logback-core}" includes="**/*.java **/*.class" />
+            <zipfileset src="${logback-classic}" includes="**/*.java **/*.class" />
+            <zipfileset file="logback.xml" />
+            <manifest>
+                <attribute name="Main-Class" value="${driver}" />
+            </manifest>
+        </jar>
+    </target>
+
+    <property name="test-src" value="test" />
+    <property name="test-bin" value="bin-test" />
+    <property name="test.large" value="false" />
+    <property name="test.filter" value="" />
+
+    <path id="run.classpath">
+        <pathelement location="${bin}" />
+        <pathelement location="${test-bin}" />
+        <fileset dir="${lib}" includes="*.jar" />
+    </path>
+
+    <target name="compile-test" depends="compile" description="compile the tests">
+        <mkdir dir="${test-bin}" />
+        <javac source="8"
+               target="8"
+               includeantruntime="false"
+               srcdir="${test-src}"
+               destdir="${test-bin}"
+               debug="on"
+               classpathref="run.classpath" />
+    </target>
+
+    <target name="test" depends="compile-test" description="run the tests; -Dtest.large=true adds the large inputs, -Dtest.filter=text selects tests by name">
+        <java classname="traversal.distributed.AllTests" fork="yes" failonerror="true" maxmemory="${maxMem}">
+            <classpath refid="run.classpath" />
+            <sysproperty key="test.large" value="${test.large}" />
+            <sysproperty key="logback.configurationFile" value="${test-src}/logback-test.xml" />
+            <arg value="${test.filter}" />
+        </java>
+    </target>
+
+    <property name="coordinator.args" value="--poset posets/d-100.txt --workers 2 --spawn processes --enumerators Counter" />
+    <property name="worker.args" value="127.0.0.1 5000" />
+    <property name="bench.args" value="--poset posets/d-300.txt" />
+
+    <target name="coordinator" depends="compile" description="distributed Lex coordinator; -Dcoordinator.args='--poset F --workers N --port P ...' (see README)">
+        <java classname="traversal.distributed.Coordinator" fork="yes" failonerror="true" maxmemory="${maxMem}">
+            <classpath refid="run.classpath" />
+            <arg line="${coordinator.args}" />
+        </java>
+    </target>
+
+    <target name="worker" depends="compile" description="distributed Lex worker; -Dworker.args='HOST PORT [--delay-ms MS]'">
+        <java classname="traversal.distributed.Worker" fork="yes" failonerror="true" maxmemory="${maxMem}">
+            <classpath refid="run.classpath" />
+            <arg line="${worker.args}" />
+        </java>
+    </target>
+
+    <target name="bench" depends="compile" description="benchmark Lex vs ConcurrentUnordered vs distributed Lex; -Dbench.args='--poset F --workers 1,2,4 ...'">
+        <java classname="traversal.distributed.Benchmark" fork="yes" failonerror="true" maxmemory="${maxMem}">
+            <classpath refid="run.classpath" />
+            <sysproperty key="logback.configurationFile" value="${test-src}/logback-test.xml" />
+            <arg line="${bench.args}" />
+        </java>
+    </target>
+
+    <target name="run" description="default run that takes parameters">
+        <property name="traverser" value="ConcurrentUnordered" />
+        <property name="test" value="posets/d-10k.txt" />
+        <property name="threads" value="4" />
+        <property name="enumerators" value="Counter" />
+        <java jar="${dist}/${dist-name}" fork="yes" maxmemory="${maxMem}">
+            <arg value="${traverser}" />
+            <arg value="${test}" />
+            <arg value="${threads}" />
+            <arg value="${enumerators}" />
+        </java>
+    </target>
+</project>
