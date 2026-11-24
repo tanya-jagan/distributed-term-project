@@ -3,7 +3,7 @@ import java.nio.file.Paths;
 public final class Main {
     public static void main(String[] args) throws Exception {
         if (args.length > 3) {
-            System.err.println("Usage: java -cp out Main [trace-file] [bfs|improved|lex|repeated|composition|paramount|paramount-bfs|paramount-active|paramount-batched|paramount-squire|paramount-pivot|all] [threads]");
+            System.err.println("Usage: java -cp out Main [trace-file] [bfs|improved|lex|repeated|composition|paramount|paramount-bfs|paramount-active|paramount-batched|paramount-pivot|all] [threads]");
             return;
         }
         String selected = args.length >= 2 ? args[1] : "lex";
@@ -21,9 +21,8 @@ public final class Main {
         };
         boolean activeCoordinates = selected.equals("paramount-active");
         boolean batched = selected.equals("paramount-batched");
-        boolean squire = selected.equals("paramount-squire");
         boolean pivot = selected.equals("paramount-pivot");
-        boolean known = selected.equals("all") || activeCoordinates || batched || squire || pivot;
+        boolean known = selected.equals("all") || activeCoordinates || batched || pivot;
         for (String name : names) known |= name.equals(selected);
         if (!known) throw new IllegalArgumentException("Unknown algorithm: " + selected);
 
@@ -38,10 +37,6 @@ public final class Main {
         }
         if (batched) {
             Benchmark.run(selected, trace, new BatchedParaMountTraversal(threads));
-            return;
-        }
-        if (squire) {
-            Benchmark.run(selected, trace, new SquireParaMountTraversal(threads));
             return;
         }
         if (pivot) {
