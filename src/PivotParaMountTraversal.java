@@ -8,7 +8,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/** Split the whole lattice on pivot events, then run lexical ParaMount on each branch. */
+/** Split whole lattice on pivot events, run lexical ParaMount on every branch */
 public final class PivotParaMountTraversal implements Traversal {
     private final int threads;
     private final int splitDepth;
@@ -124,7 +124,7 @@ public final class PivotParaMountTraversal implements Traversal {
         }
 
         Trace reduced = new Trace(events);
-        // The empty cut of this reduced trace represents the branch floor.
+        // Empty cut of reduced trace is the branch floor
         jobs.add(new Job(events, active, lower, null, null));
         int[][] ranks = reduced.topologicalRanks();
         int[] processAtRank = new int[Math.toIntExact(reduced.totalEvents())];
@@ -166,7 +166,6 @@ public final class PivotParaMountTraversal implements Traversal {
         }
     }
 
-    /** Figure 2's lex successor, restricted to one ParaMount interval. */
     private static void boundedLex(int[][][] clocks, int[] lower, int[] upper,
                                    Consumer<int[]> visit) {
         int[] varying = new int[lower.length];
@@ -192,14 +191,11 @@ public final class PivotParaMountTraversal implements Traversal {
             }
 
             g[varying[position]]++;
-            // The advance is enabled, so the existing suffix already meets its dependencies.
-            // Rebuild the suffix only when moving left in the coordinate order.
             if (previous > position && position + 1 < count) {
                 for (int i = position + 1; i < count; i++) {
                     int p = varying[i];
                     g[p] = lower[p];
                 }
-                // Fixed prefix events are already included in the consistent lower cut.
                 for (int j = 0; j <= position; j++) {
                     int p = varying[j];
                     if (g[p] == 0) continue;
@@ -215,8 +211,6 @@ public final class PivotParaMountTraversal implements Traversal {
     }
 
     private static boolean enabled(int[] clock, int owner, int[] cut, int[] varying, int count) {
-        // Fixed coordinates match the consistent upper cut and satisfy its dependencies.
-        // The caller checks that the next event fits on the advancing process.
         for (int i = 0; i < count; i++) {
             int p = varying[i];
             if (p != owner && clock[p] > cut[p]) return false;

@@ -1,6 +1,6 @@
 import java.util.function.Consumer;
 
-/** Generate bounded integer compositions at each level */
+/** Generate bounded integer compositions for every level */
 public final class CompositionBfsTraversal implements Traversal {
     public void enumerate(Trace trace, Consumer<int[]> visit) {
         long[] suffix = new long[trace.processes() + 1];

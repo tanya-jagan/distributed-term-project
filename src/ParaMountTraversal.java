@@ -11,9 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
- * ParaMount-style parallel enumeration. Each event defines one disjoint
- * interval [least cut(event), boundary(event)]; workers enumerate intervals
- * using either bounded lexical traversal (L-Para) or bounded BFS (B-Para).
+ * ParaMount parallel enumeration, each event takes one disjoint interval [least cut(event), boundary(event)], and workers enumerate intervals using L-Para or B-Para
  */
 public final class ParaMountTraversal implements Traversal {
     public enum Subalgorithm { LEX, BFS }
@@ -51,7 +49,6 @@ public final class ParaMountTraversal implements Traversal {
             throw new IllegalArgumentException("Too many events for ParaMount partition indexing");
         int eventCount = (int) eventCountLong;
 
-        // The zero cut is not owned by an event interval, so visit it once.
         visit.accept(new int[n]);
         if (eventCount == 0) return;
 
@@ -64,8 +61,6 @@ public final class ParaMountTraversal implements Traversal {
             }      
         }
 
-        // In the original builder, a node's boundary is the prefix seen up
-        // through that node in a topological ordering of the input events.
         int[] prefix = new int[n];
         List<Partition> partitions = new ArrayList<>(eventCount);
         for (int rank = 0; rank < eventCount; rank++) {
@@ -109,7 +104,6 @@ public final class ParaMountTraversal implements Traversal {
         }
     }
 
-    /** Figure 2's lex successor, restricted to one ParaMount interval. */
     private static void boundedLex(Trace trace, int[] lower, int[] upper,
                                    Consumer<int[]> visit) {
         int n = trace.processes();
@@ -148,7 +142,6 @@ public final class ParaMountTraversal implements Traversal {
         }
     }
 
-    /** Bounded BFS with the paper's canonical-parent duplicate rule. */
     private static void boundedBfs(Trace trace, int[][] sigma, int[] lower,
                                    int[] upper, Consumer<int[]> visit) {
         int n = trace.processes();

@@ -26,7 +26,6 @@ public final class Main {
         for (String name : names) known |= name.equals(selected);
         if (!known) throw new IllegalArgumentException("Unknown algorithm: " + selected);
 
-        // Parsing and initial validation are outside the measured traversal time.
         Trace trace = args.length == 0
             ? new Trace(new int[][][] {{ {1,0}, {2,1} }, { {0,1}, {1,2} }})
             : TraceReader.read(Paths.get(args[0]));

@@ -35,7 +35,7 @@ public final class BatchedParaMountTraversal implements Traversal {
             throw new IllegalArgumentException("Too many events for ParaMount partition indexing");
         int eventCount = (int) eventCountLong;
 
-        // The zero cut is not owned by an event interval, so visit it once.
+        // Visit zero cut
         visit.accept(new int[n]);
         if (eventCount == 0) return;
 
@@ -48,8 +48,6 @@ public final class BatchedParaMountTraversal implements Traversal {
             }
         }
 
-        // In the original builder, a node's boundary is the prefix seen up
-        // through that node in a topological ordering of the input events.
         int[] prefix = new int[n];
         List<Partition> partitions = new ArrayList<>(eventCount);
         for (int rank = 0; rank < eventCount; rank++) {
@@ -89,7 +87,6 @@ public final class BatchedParaMountTraversal implements Traversal {
         }
     }
 
-    /** Figure 2's lex successor, restricted to one ParaMount interval. */
     private static void boundedLex(Trace trace, int[] lower, int[] upper,
                                    Consumer<int[]> visit) {
         int n = trace.processes();
@@ -113,7 +110,6 @@ public final class BatchedParaMountTraversal implements Traversal {
             if (end > start) previousK = last;
             if (Arrays.equals(g, upper)) return;
 
-            // The batch exhausted the last varying coordinate for this prefix.
             int k = last - 1;
             for (; k >= 0; k--) {
                 if (g[k] == upper[k]) continue;
@@ -142,13 +138,12 @@ public final class BatchedParaMountTraversal implements Traversal {
         }
     }
 
-    /** Largest legal count on process with all other coordinates held fixed. */
+    /** Largest legal count on process when all other coordinates stay constant */
     private static int batchEnd(Trace trace, int[] cut, int process, int ceiling) {
         int start = cut[process];
         if (start == ceiling || !trace.enabled(cut, process)) return start;
 
-        // Testing a candidate uses the existing vector-clock check for its
-        // next event. It ignores the candidate's own coordinate.
+        // Testing a candidate uses the existing vector-clock check for next event
         cut[process] = ceiling - 1;
         if (trace.enabled(cut, process)) {
             cut[process] = start;

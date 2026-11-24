@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Reads the repository's pid:(v0,v1,...) event-line format. */
 public final class TraceReader {
     private TraceReader() {}
 
@@ -17,7 +16,6 @@ public final class TraceReader {
             String line;
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
-                // Match the original parser: ignore lines without '(' or ':'.
                 int open = line.indexOf('(');
                 int colon = line.indexOf(':');
                 if (open < 0 || colon < 0) continue;
@@ -47,7 +45,6 @@ public final class TraceReader {
         for (int p = 0; p < chains.size(); p++)
             events[p] = chains.get(p).toArray(new int[0][]);
         try {
-            // Trace uses count zero implicitly; do not add the builder's dummy nodes.
             return new Trace(events);
         } catch (IllegalArgumentException ex) {
             throw new IOException("Invalid vector-clock trace: " + ex.getMessage(), ex);

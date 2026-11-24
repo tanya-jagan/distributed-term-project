@@ -7,7 +7,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/** ParaMount lexical traversal that skips fixed coordinates within each interval. */
+/** ParaMount lexical traversal that skips fixed coordinates within each interval */
 public final class ActiveCoordinateParaMountTraversal implements Traversal {
     private static final class Partition {
         final int[] lower;
@@ -34,12 +34,11 @@ public final class ActiveCoordinateParaMountTraversal implements Traversal {
             throw new IllegalArgumentException("Too many events for ParaMount partition indexing");
         int eventCount = (int) eventCountLong;
 
-        // The zero cut is not owned by an event interval, so visit it once.
+        // Visit zero cut
         visit.accept(new int[n]);
         if (eventCount == 0) return;
 
-        // Read each immutable event clock once. The traversal reuses these
-        // defensive copies instead of requesting a fresh copy on every check.
+        // Read each immutable event clock once
         int[][][] clocks = new int[n][][];
         for (int p = 0; p < n; p++) {
             clocks[p] = new int[trace.size(p)][];
@@ -57,8 +56,6 @@ public final class ActiveCoordinateParaMountTraversal implements Traversal {
             }
         }
 
-        // In the original builder, a node's boundary is the prefix seen up
-        // through that node in a topological ordering of the input events.
         int[] prefix = new int[n];
         List<Partition> partitions = new ArrayList<>(eventCount);
         for (int rank = 0; rank < eventCount; rank++) {
@@ -158,8 +155,7 @@ public final class ActiveCoordinateParaMountTraversal implements Traversal {
     }
 
     private static boolean enabled(int[] clock, int owner, int[] cut, int[] active, int count) {
-        // At a fixed coordinate, cut equals the consistent upper bound,
-        // so every dependency of a candidate below that bound is satisfied.
+        // At fixed coordinate, cut equals the consistent upper bound, so every dependency of a candidate below that bound met
         for (int i = 0; i < count; i++) {
             int process = active[i];
             if (process != owner && clock[process] > cut[process]) return false;

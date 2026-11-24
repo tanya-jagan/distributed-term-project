@@ -1,4 +1,4 @@
-/** Immutable, in-memory trace represented by per-event vector clocks. */
+
 public final class Trace {
     private final int[][][] events;
     public Trace(int[][][] input) {
@@ -18,7 +18,6 @@ public final class Trace {
                 events[p][k] = clock.clone();
             }
         }
-        // Clocks must include the dependencies of their dependencies.
         for (int[][] process : events) for (int[] clock : process)
             for (int j = 0; j < events.length; j++) if (clock[j] > 0)
                 for (int h = 0; h < events.length; h++)
@@ -27,7 +26,6 @@ public final class Trace {
     }
     public int processes() { return events.length; }
     public int size(int p) { return events[p].length; }
-    /** Clock of the zero-based event on process p (returned as a defensive copy). */
     public int[] eventClock(int p, int eventIndex) { return events[p][eventIndex].clone(); }
     public boolean enabled(int[] state, int p) {
         if (state[p] >= size(p)) return false;
@@ -65,7 +63,6 @@ public final class Trace {
         return new Trace(reduced);
     }
 
-    // A frontier event is maximal only if no included event succeeds it.
     public boolean maximal(int[] state, int p) {
         if (state[p] == 0) return false;
         for (int q = 0; q < processes(); q++) {
@@ -74,11 +71,10 @@ public final class Trace {
         }
         return true;
     }
-    // For an enabled next event e on p, e cannot precede any event in state.
+    // For enabled next event e on p, e cannot come before any event in state
     public boolean concurrentWithFrontier(int[] state, int p, int q) {
         return state[q] > 0 && events[p][state[p]][q] < state[q];
     }
-    // Assign sigma ranks by repeatedly executing an enabled next event.
     public int[][] topologicalRanks() {
         int[][] ranks = new int[processes()][];
         for (int p = 0; p < processes(); p++) ranks[p] = new int[size(p)];
@@ -108,7 +104,7 @@ public final class Trace {
         return true;
     }
 
-    /** Whether two events are concurrent according to their vector clocks. */
+    /** Decide whether two events are concurrent based on their vector clocks */
     public boolean concurrentEvents(int p, int pEvent, int q, int qEvent) {
         int[] a = events[p][pEvent];
         int[] b = events[q][qEvent];
